@@ -463,7 +463,8 @@ public class CommonEventHandler {
             }
         }
 
-        if (weapon.hasTag() && weapon.getTag().contains("remainingPotionHits")) {
+        if (ModConfig.COMMON.enableWeaponCoating.get()
+                && weapon.hasTag() && weapon.getTag().contains("remainingPotionHits")) {
             int hits = weapon.getTag().getInt("remainingPotionHits");
             if (hits > 0) {
                 LivingEntity target = event.getEntity();

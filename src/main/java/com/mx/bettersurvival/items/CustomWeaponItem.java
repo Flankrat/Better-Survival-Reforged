@@ -3,6 +3,7 @@ package com.mx.bettersurvival.items;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.mx.bettersurvival.BetterSurvival;
+import com.mx.bettersurvival.config.ModConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.tags.BlockTags;
@@ -145,6 +146,8 @@ public class CustomWeaponItem extends Item {
     }
 
     public static void addVenomTooltip(ItemStack stack, List<Component> tooltip) {
+        if (!ModConfig.COMMON.enableWeaponCoating.get())
+            return;
         if (!stack.hasTag() || !stack.getTag().contains("remainingPotionHits"))
             return;
         int remaining = stack.getTag().getInt("remainingPotionHits");

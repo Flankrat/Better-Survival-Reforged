@@ -3,13 +3,13 @@ package com.mx.bettersurvival;
 import com.mx.bettersurvival.config.ModConfig;
 import com.mx.bettersurvival.init.*;
 import com.mx.bettersurvival.network.ModNetwork;
+import com.mx.bettersurvival.recipe.PotionTypeBrewingRecipe;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.item.alchemy.Potions;
-import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.brewing.BrewingRecipeRegistry;
@@ -167,10 +167,9 @@ public class BetterSurvival {
         }
 
         private static void addBrewing(Potion input, net.minecraft.world.level.ItemLike reagent, Potion output) {
-                BrewingRecipeRegistry.addRecipe(
-                                Ingredient.of(PotionUtils.setPotion(new ItemStack(Items.POTION), input)),
-                                Ingredient.of(reagent),
-                                PotionUtils.setPotion(new ItemStack(Items.POTION), output));
+                // Ingredient.of(potionStack) ignores NBT, so it matched every potion bottle;
+                // PotionTypeBrewingRecipe checks the input's potion type.
+                BrewingRecipeRegistry.addRecipe(new PotionTypeBrewingRecipe(input, reagent, output));
         }
 
         private void clientSetup(final FMLClientSetupEvent event) {
