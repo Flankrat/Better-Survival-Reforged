@@ -177,7 +177,7 @@ public final class IaFCompat {
         }
         // 雷龙骨 — 链式闪电+蓄电
         else if (tier == LIGHTNING_DRAGONBONE) {
-            if (applyEffects && attacker != null)
+            if (applyEffects)
                 applyLightningAbility(target, attacker, baseDamage);
             if (isFireDragon(target) || isIceDragon(target))
                 return 4.0F;
@@ -198,7 +198,7 @@ public final class IaFCompat {
         }
         // 雷龙钢 — 强化链闪
         else if (tier == LIGHTNING_DRAGONSTEEL) {
-            if (applyEffects && attacker != null)
+            if (applyEffects)
                 applyLightningAbility(target, attacker, baseDamage);
             if (isFireDragon(target) || isIceDragon(target))
                 return 6.0F;
@@ -278,8 +278,8 @@ public final class IaFCompat {
         elementKnockback(target, attacker);
     }
 
-    /** Lightning: Ice and Fire's chain lightning and knockback. */
-    private static void applyLightningAbility(LivingEntity target, LivingEntity attacker, float baseDamage) {
+    /** Lightning: Ice and Fire's chain lightning and knockback. A thrown spear has no attacker. */
+    private static void applyLightningAbility(LivingEntity target, @Nullable LivingEntity attacker, float baseDamage) {
         if (!iafAbilityEnabled("dragonWeaponLightningAbility"))
             return;
         applyChainLightning(target, attacker, baseDamage);
@@ -289,12 +289,15 @@ public final class IaFCompat {
     /**
      * 链式闪电 — 多目标跳跃 + 蓄电叠层
      */
-    private static void applyChainLightning(LivingEntity target, Entity attacker, float baseDamage) {
+    private static void applyChainLightning(LivingEntity target, @Nullable Entity attacker, float baseDamage) {
         if (target.level().isClientSide)
             return;
 
         try {
-            com.github.alexthe666.iceandfire.api.ChainLightningUtils.createChainLightning(target.level(), target, attacker, baseDamage);
+            // No attacker (thrown spear): skip the held-weapon cooldown, which would land on whatever the
+            // thrower is holding now.
+            com.github.alexthe666.iceandfire.api.ChainLightningUtils.createChainLightning(
+                    target.level(), target, attacker, baseDamage, attacker != null);
         } catch (Throwable e) {
             // 降级: JMixin链闪 或 原版闪电
             triggerFallbackLightning(target, attacker);

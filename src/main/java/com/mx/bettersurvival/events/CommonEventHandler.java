@@ -145,8 +145,8 @@ public class CommonEventHandler {
 
         // 过滤非直接近战伤害（如Melt/Frostbite的indirectMagic tick），
         // 避免药效持续伤害被误判为玩家攻击从而叠加/串联元素效果
-        boolean isDirectAttack = event.getSource().is(net.minecraft.world.damagesource.DamageTypes.PLAYER_ATTACK)
-                || event.getSource().is(net.minecraft.world.damagesource.DamageTypes.MOB_ATTACK);
+        // Also counts RLCombat's slashing/piercing/blunt melee types (see MeleeHits).
+        boolean isDirectAttack = com.mx.bettersurvival.combat.MeleeHits.isMeleeHit(event.getSource());
 
         // Dagger backstab: every dagger does bonus damage from behind (as its tooltip says); Assassinate adds
         // +0.5x per level on top. Previously the whole backstab was gated behind Assassinate, so plain daggers
