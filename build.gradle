@@ -69,6 +69,8 @@ dependencies {
     )
     // JMixin (for chain lightning — BS calls JMixin's API directly)
     compileOnly files('libs/JMixin.jar')
+    // Progressive Mechanics Library (Kettle5000): melee damage tag + shared damage pipeline (optional at runtime)
+    compileOnly files('libs/pml-1.0.5b-all.jar')
 }
 
 // Workaround for SpongePowered/MixinGradle#38
