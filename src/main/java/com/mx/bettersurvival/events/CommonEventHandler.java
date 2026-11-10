@@ -132,6 +132,21 @@ public class CommonEventHandler {
         }
     }
 
+    // Weapon bonuses go through Progressive Mechanics Library's damage pipeline when it's tracking the hit,
+    // so they stack with Spartan Weaponry traits and JLME enchantments by the same rules; otherwise edit the
+    // event's amount like before.
+    private static void addFlatDamage(LivingHurtEvent event, float bonus) {
+        if (!(BetterSurvival.isPmlLoaded
+                && com.mx.bettersurvival.integration.PmlCompat.addBaseFlatBonus(event.getSource(), bonus)))
+            event.setAmount(event.getAmount() + bonus);
+    }
+
+    private static void multiplyDamage(LivingHurtEvent event, float multiplier) {
+        if (!(BetterSurvival.isPmlLoaded
+                && com.mx.bettersurvival.integration.PmlCompat.addBaseMultiplier(event.getSource(), multiplier)))
+            event.setAmount(event.getAmount() * multiplier);
+    }
+
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
         Entity sourceEntity = event.getSource().getEntity();
@@ -145,8 +160,8 @@ public class CommonEventHandler {
 
         // 过滤非直接近战伤害（如Melt/Frostbite的indirectMagic tick），
         // 避免药效持续伤害被误判为玩家攻击从而叠加/串联元素效果
-        boolean isDirectAttack = event.getSource().is(net.minecraft.world.damagesource.DamageTypes.PLAYER_ATTACK)
-                || event.getSource().is(net.minecraft.world.damagesource.DamageTypes.MOB_ATTACK);
+        // Also counts other melee damage types listed in PML's pml:is_melee_attack tag (see MeleeHits).
+        boolean isDirectAttack = com.mx.bettersurvival.combat.MeleeHits.isMeleeHit(event.getSource());
 
         // Dagger backstab: every dagger does bonus damage from behind (as its tooltip says); Assassinate adds
         // +0.5x per level on top. Previously the whole backstab was gated behind Assassinate, so plain daggers
@@ -155,7 +170,7 @@ public class CommonEventHandler {
             float backstabMult = dagger.getBackstabMultiplier(attacker, target);
             if (backstabMult > 1.0F) {
                 int level = weapon.getEnchantmentLevel(ModEnchantments.ASSASSINATE.get());
-                event.setAmount(event.getAmount() * (backstabMult + level * 0.5F));
+                multiplyDamage(event, backstabMult + level * 0.5F);
             }
         }
 
@@ -194,14 +209,14 @@ public class CommonEventHandler {
 
         if (weapon.getItem() instanceof NunchakuItem && isDirectAttack) {
             attacker.getCapability(ModCapabilities.NUNCHAKU_COMBO).ifPresent(combo -> {
-                event.setAmount(event.getAmount() * (combo.getComboPower() + 1.0F));
+                multiplyDamage(event, combo.getComboPower() + 1.0F);
             });
         }
 
         if (isDirectAttack && BetterSurvival.isIafLoaded && weapon.getItem() instanceof CustomWeaponItem) {
             float bonus = com.mx.bettersurvival.integration.IaFCompat.getMaterialModifier(weapon, target, attacker);
             if (bonus > 0.0F) {
-                event.setAmount(event.getAmount() + bonus);
+                addFlatDamage(event, bonus);
             }
         }
 
@@ -209,7 +224,7 @@ public class CommonEventHandler {
         if (isDirectAttack && BetterSurvival.isTwilightLoaded && weapon.getItem() instanceof CustomWeaponItem) {
             float bonus = com.mx.bettersurvival.integration.TwilightCompat.getMaterialModifier(weapon, target, attacker);
             if (bonus > 0.0F) {
-                event.setAmount(event.getAmount() + bonus);
+                addFlatDamage(event, bonus);
             }
         }
 
@@ -222,7 +237,7 @@ public class CommonEventHandler {
         if (isDirectAttack && weapon.getItem() instanceof CustomWeaponItem) {
             float bonus = com.mx.bettersurvival.integration.SrpCompat.getMaterialModifier(weapon, target, attacker);
             if (bonus > 0.0F) {
-                event.setAmount(event.getAmount() + bonus);
+                addFlatDamage(event, bonus);
             }
         }
 

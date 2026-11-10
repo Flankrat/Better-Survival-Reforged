@@ -3,7 +3,6 @@ package com.mx.bettersurvival.events;
 import com.mx.bettersurvival.BetterSurvival;
 import com.mx.bettersurvival.items.NunchakuItem;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.TickEvent;
@@ -35,7 +34,7 @@ public final class NunchakuKnockbackHandler {
         if (target.level().isClientSide)
             return;
         DamageSource source = event.getSource();
-        if (source.is(DamageTypes.PLAYER_ATTACK)
+        if (com.mx.bettersurvival.combat.MeleeHits.isMeleeHit(source)
                 && source.getDirectEntity() instanceof Player attacker
                 && attacker.getMainHandItem().getItem() instanceof NunchakuItem) {
             HIT_ENTITY_IDS.add(target.getId());

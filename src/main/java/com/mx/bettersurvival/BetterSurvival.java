@@ -35,6 +35,7 @@ public class BetterSurvival {
         public static boolean isEnigmaticLoaded;
         public static boolean isTwilightLoaded;
         public static boolean isCataclysmLoaded;
+        public static boolean isPmlLoaded;
 
         public BetterSurvival() {
 
@@ -44,6 +45,7 @@ public class BetterSurvival {
                 isEnigmaticLoaded = net.minecraftforge.fml.ModList.get().isLoaded("enigmaticlegacy");
                 isTwilightLoaded = net.minecraftforge.fml.ModList.get().isLoaded("twilightforest");
                 isCataclysmLoaded = net.minecraftforge.fml.ModList.get().isLoaded("cataclysm");
+                isPmlLoaded = net.minecraftforge.fml.ModList.get().isLoaded("pml");
                 if (isIafLoaded)
                         LOGGER.info("RLC IaF detected — BS weapons will use IaF materials (with RLC effects).");
                 if (isDefiledLoaded)

@@ -19,9 +19,9 @@ import java.util.List;
 
 /**
  * RLC IaF 兼容层 — 使用RLC版独有的效果系统:
- * 火系: MobEffectMelt（熔蚀叠层减甲）
- * 冰系: MobEffectFrostbite（冰噬叠层冰碎）
- * 电系: ChainLightningUtils + MobEffectVoltage（链闪+蓄电放电）
+ * 火系: 着火 + 击退 (同冰与火的火龙骨剑)
+ * 冰系: 冰冻 + 缓慢/挖掘疲劳 + 击退 (同冰与火的冰龙骨剑)
+ * 电系: ChainLightningUtils 链式闪电 + 击退 (同冰与火的雷龙骨剑)
  * 金龙钢: 圣铭之力（魔法伤害+发光）
  */
 public final class IaFCompat {
@@ -164,42 +164,42 @@ public final class IaFCompat {
         // 火龙骨 — 熔蚀
         else if (tier == FIRE_DRAGONBONE) {
             if (applyEffects)
-                applyMeltEffect(target, attacker, baseDamage, 120);
+                applyFireAbility(target, attacker, 5);
             if (isIceDragon(target))
                 return 8.0F;
         }
         // 冰龙骨 — 冰噬
         else if (tier == ICE_DRAGONBONE) {
             if (applyEffects)
-                applyFrostbiteEffect(target, attacker, 200, baseDamage);
+                applyIceAbility(target, attacker, 200, 100, 2);
             if (isFireDragon(target))
                 return 8.0F;
         }
         // 雷龙骨 — 链式闪电+蓄电
         else if (tier == LIGHTNING_DRAGONBONE) {
-            if (applyEffects && attacker != null)
-                applyChainLightning(target, attacker, baseDamage);
+            if (applyEffects)
+                applyLightningAbility(target, attacker, baseDamage);
             if (isFireDragon(target) || isIceDragon(target))
                 return 4.0F;
         }
         // 火龙钢 — 强化熔蚀
         else if (tier == FIRE_DRAGONSTEEL) {
             if (applyEffects)
-                applyMeltEffect(target, attacker, baseDamage, 160);
+                applyFireAbility(target, attacker, 8);
             if (isIceDragon(target))
                 return 12.0F;
         }
         // 冰龙钢 — 强化冰噬
         else if (tier == ICE_DRAGONSTEEL) {
             if (applyEffects)
-                applyFrostbiteEffect(target, attacker, 200, baseDamage);
+                applyIceAbility(target, attacker, 300, 140, 3);
             if (isFireDragon(target))
                 return 12.0F;
         }
         // 雷龙钢 — 强化链闪
         else if (tier == LIGHTNING_DRAGONSTEEL) {
-            if (applyEffects && attacker != null)
-                applyChainLightning(target, attacker, baseDamage);
+            if (applyEffects)
+                applyLightningAbility(target, attacker, baseDamage);
             if (isFireDragon(target) || isIceDragon(target))
                 return 6.0F;
         }
@@ -222,49 +222,86 @@ public final class IaFCompat {
     // RLC IaF效果 — 反射调用
     // ════════════════════════════════════════════════════════
 
-    /**
-     * 熔蚀效果 — 叠层减甲+持续魔法伤害
-     * 反射调用: MobEffectMelt.applyMelt(target, attacker, weaponDamage, durationTicks)
-     */
-    private static void applyMeltEffect(LivingEntity target, @Nullable LivingEntity attacker,
-            float weaponDamage, int durationTicks) {
-        try {
-            com.github.alexthe666.iceandfire.effect.MobEffectMelt.applyMelt(target, attacker, weaponDamage, durationTicks);
-        } catch (Throwable e) {
-            // 降级: 使用原版着火效果
-            target.setSecondsOnFire(5);
-            BetterSurvival.LOGGER.warn("RLC Melt fallback to setSecondsOnFire. Cause: {}", e.toString());
+    // RLCraft's Ice and Fire (Ice_and_Fire_RLCraft) has no Melt/Frostbite/Voltage effects;
+    // those only exist in the "iceandfire-rlc" build this was first written against. Calling them
+    // threw NoClassDefFoundError on every hit, so the weapons fell back to plain fire/slowness.
+    // These mirror Ice and Fire's own flamed/iced/lightning dragonbone swords (ItemAlchemySword)
+    // and honour the same Ice and Fire config switches.
+
+    private static boolean warnedIafApi = false;
+
+    private static void warnIafApiOnce(String what, Throwable e) {
+        if (!warnedIafApi) {
+            warnedIafApi = true;
+            BetterSurvival.LOGGER.warn("Ice and Fire {} hook failed, using fallback: {}", what, e.toString());
         }
     }
 
-    /**
-     * 冰噬效果 — 叠层到阈值触发冰碎爆发
-     */
-    private static void applyFrostbiteEffect(LivingEntity target, @Nullable LivingEntity attacker,
-            int durationTicks, float baseDamage) {
+    private static boolean iafAbilityEnabled(String field) {
         try {
-            com.github.alexthe666.iceandfire.effect.MobEffectFrostbite.applyFrostbite(target, attacker, durationTicks, baseDamage);
+            return com.github.alexthe666.iceandfire.IafConfig.class.getField(field).getBoolean(null);
         } catch (Throwable e) {
-            // 降级: 使用原版缓慢效果
-            target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 2));
-            target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 100, 2));
-            BetterSurvival.LOGGER.warn("RLC Frostbite fallback to slowness. Cause: {}", e.toString());
+            return true;
         }
+    }
+
+    /** Same knockback Ice and Fire's elemental swords add on hit. */
+    private static void elementKnockback(LivingEntity target, @Nullable LivingEntity attacker) {
+        if (attacker != null) {
+            target.knockback(1.0, attacker.getX() - target.getX(), attacker.getZ() - target.getZ());
+        }
+    }
+
+    /** Fire: set the target on fire and knock it back. */
+    private static void applyFireAbility(LivingEntity target, @Nullable LivingEntity attacker, int seconds) {
+        if (!iafAbilityEnabled("dragonWeaponFireAbility"))
+            return;
+        target.setSecondsOnFire(seconds);
+        elementKnockback(target, attacker);
+    }
+
+    /** Ice: encase the target in Ice and Fire's frozen state, slow it and knock it back. */
+    private static void applyIceAbility(LivingEntity target, @Nullable LivingEntity attacker,
+            int frozenTicks, int slowTicks, int amplifier) {
+        if (!iafAbilityEnabled("dragonWeaponIceAbility"))
+            return;
+        if (!target.level().isClientSide) {
+            try {
+                com.github.alexthe666.iceandfire.entity.props.EntityDataProvider.getCapability(target)
+                        .ifPresent(data -> data.frozenData.setFrozen(target, frozenTicks));
+            } catch (Throwable e) {
+                warnIafApiOnce("freeze", e);
+            }
+        }
+        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, slowTicks, amplifier));
+        target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, slowTicks, amplifier));
+        elementKnockback(target, attacker);
+    }
+
+    /** Lightning: Ice and Fire's chain lightning and knockback. A thrown spear has no attacker. */
+    private static void applyLightningAbility(LivingEntity target, @Nullable LivingEntity attacker, float baseDamage) {
+        if (!iafAbilityEnabled("dragonWeaponLightningAbility"))
+            return;
+        applyChainLightning(target, attacker, baseDamage);
+        elementKnockback(target, attacker);
     }
 
     /**
      * 链式闪电 — 多目标跳跃 + 蓄电叠层
      */
-    private static void applyChainLightning(LivingEntity target, Entity attacker, float baseDamage) {
+    private static void applyChainLightning(LivingEntity target, @Nullable Entity attacker, float baseDamage) {
         if (target.level().isClientSide)
             return;
 
         try {
-            com.github.alexthe666.iceandfire.api.ChainLightningUtils.createChainLightning(target.level(), target, attacker, baseDamage);
+            // No attacker (thrown spear): skip the held-weapon cooldown, which would land on whatever the
+            // thrower is holding now.
+            com.github.alexthe666.iceandfire.api.ChainLightningUtils.createChainLightning(
+                    target.level(), target, attacker, baseDamage, attacker != null);
         } catch (Throwable e) {
             // 降级: JMixin链闪 或 原版闪电
             triggerFallbackLightning(target, attacker);
-            BetterSurvival.LOGGER.warn("RLC ChainLightning fallback. Cause: {}", e.toString());
+            warnIafApiOnce("chain lightning", e);
         }
     }
 
