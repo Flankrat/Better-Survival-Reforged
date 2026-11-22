@@ -188,7 +188,10 @@ public class ModConfig {
 
                         builder.pop();
 
-                        builder.comment("Enchantment settings").push("enchantments");
+                        builder.comment("Enchantment settings",
+                                        "A max level of 0 turns the enchantment off completely: it isn't registered, so no loot, trade,",
+                                        "enchanting table or command can give it. Changing a max level to or from 0 needs a game restart.")
+                                        .push("enchantments");
 
                         assassinateLevel = builder.defineInRange("assassinateMaxLevel", 3, 0, 10);
                         agilityLevel = builder.defineInRange("agilityMaxLevel", 2, 0, 10);
