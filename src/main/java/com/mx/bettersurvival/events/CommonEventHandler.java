@@ -55,7 +55,7 @@ public class CommonEventHandler {
             return;
 
         ItemStack legsArmor = entity.getItemBySlot(EquipmentSlot.LEGS);
-        int agilityLevel = legsArmor.getEnchantmentLevel(ModEnchantments.AGILITY.get());
+        int agilityLevel = ModEnchantments.level(ModEnchantments.AGILITY, legsArmor);
         if (agilityLevel > 0) {
             AgilityEnchantment.applySpeedModifier(entity, agilityLevel);
         } else {
@@ -64,7 +64,7 @@ public class CommonEventHandler {
 
         if (entity instanceof Player player) {
             ItemStack chestArmor = player.getItemBySlot(EquipmentSlot.CHEST);
-            int vitalityLevel = chestArmor.getEnchantmentLevel(ModEnchantments.VITALITY.get());
+            int vitalityLevel = ModEnchantments.level(ModEnchantments.VITALITY, chestArmor);
             VitalityEnchantment.healPlayer(player, vitalityLevel);
 
             if (player.getMainHandItem().getItem() instanceof NunchakuItem) {
@@ -110,7 +110,7 @@ public class CommonEventHandler {
         LivingEntity entity = event.getEntity();
 
         ItemStack boots = entity.getItemBySlot(EquipmentSlot.FEET);
-        int level = boots.getEnchantmentLevel(ModEnchantments.HIGH_JUMP.get());
+        int level = ModEnchantments.level(ModEnchantments.HIGH_JUMP, boots);
         if (level > 0) {
             HighJumpEnchantment.boostJump(entity, level);
         }
@@ -169,13 +169,13 @@ public class CommonEventHandler {
         if (weapon.getItem() instanceof DaggerItem dagger && isDirectAttack) {
             float backstabMult = dagger.getBackstabMultiplier(attacker, target);
             if (backstabMult > 1.0F) {
-                int level = weapon.getEnchantmentLevel(ModEnchantments.ASSASSINATE.get());
+                int level = ModEnchantments.level(ModEnchantments.ASSASSINATE, weapon);
                 multiplyDamage(event, backstabMult + level * 0.5F);
             }
         }
 
         if (weapon.getItem() instanceof HammerItem && isDirectAttack) {
-            int level = weapon.getEnchantmentLevel(ModEnchantments.BASH.get());
+            int level = ModEnchantments.level(ModEnchantments.BASH, weapon);
             double stunChance = ModConfig.COMMON.stunBaseChance.get()
                     + level * ModConfig.COMMON.bashModifier.get();
             if (attacker.getAttackStrengthScale(0.5F) > 0.9F
@@ -189,7 +189,7 @@ public class CommonEventHandler {
         if (weapon.getItem() instanceof BattleAxeItem && isDirectAttack) {
             // disarmBaseChance applies to every full-strength battle axe hit (like stunBaseChance for hammers);
             // Disarm only raises it. The old "level > 0" gate made base battle axes unable to disarm at all.
-            int level = weapon.getEnchantmentLevel(ModEnchantments.DISARM.get());
+            int level = ModEnchantments.level(ModEnchantments.DISARM, weapon);
             if (attacker.getAttackStrengthScale(0.5F) > 0.9F) {
                 double disarmChance = ModConfig.COMMON.disarmBaseChance.get()
                         + level * ModConfig.COMMON.disarmModifier.get();
@@ -204,7 +204,7 @@ public class CommonEventHandler {
         }
 
         if (isDirectAttack) {
-            VampirismEnchantment.tryHeal(attacker, weapon.getEnchantmentLevel(ModEnchantments.VAMPIRISM.get()));
+            VampirismEnchantment.tryHeal(attacker, ModEnchantments.level(ModEnchantments.VAMPIRISM, weapon));
         }
 
         if (weapon.getItem() instanceof NunchakuItem && isDirectAttack) {
@@ -281,7 +281,7 @@ public class CommonEventHandler {
         if (!(item.getItem() instanceof BowItem))
             return;
 
-        int rapidFireLevel = item.getEnchantmentLevel(ModEnchantments.RAPID_FIRE.get());
+        int rapidFireLevel = ModEnchantments.level(ModEnchantments.RAPID_FIRE, item);
         if (rapidFireLevel <= 0)
             return;
 
@@ -305,7 +305,7 @@ public class CommonEventHandler {
         if (power < 0.1F)
             return;
 
-        int multishotLevel = bow.getEnchantmentLevel(ModEnchantments.MULTISHOT.get());
+        int multishotLevel = ModEnchantments.level(ModEnchantments.MULTISHOT, bow);
         if (multishotLevel > 0) {
             int extraArrows = multishotLevel * 2;
             for (int i = 0; i < extraArrows; i++) {
@@ -352,13 +352,13 @@ public class CommonEventHandler {
         if (bow.isEmpty())
             return;
 
-        int rangeLevel = bow.getEnchantmentLevel(ModEnchantments.RANGE.get());
+        int rangeLevel = ModEnchantments.level(ModEnchantments.RANGE, bow);
         if (rangeLevel > 0) {
             double multiplier = RangeEnchantment.getVelocityMultiplier();
             arrow.setDeltaMovement(arrow.getDeltaMovement().scale(multiplier));
         }
 
-        int recoveryLevel = bow.getEnchantmentLevel(ModEnchantments.ARROW_RECOVERY.get());
+        int recoveryLevel = ModEnchantments.level(ModEnchantments.ARROW_RECOVERY, bow);
         if (recoveryLevel > 0) {
             arrow.getCapability(ModCapabilities.ARROW_PROPERTIES).ifPresent(props -> {
                 props.setRecoveryLevel(recoveryLevel);
@@ -404,7 +404,7 @@ public class CommonEventHandler {
         ItemStack tool = player.getMainHandItem();
 
         if (!isMiningTunneling) {
-            int tunnelingLevel = tool.getEnchantmentLevel(ModEnchantments.TUNNELING.get());
+            int tunnelingLevel = ModEnchantments.level(ModEnchantments.TUNNELING, tool);
             if (tunnelingLevel > 0) {
                 isMiningTunneling = true;
                 try {
@@ -415,7 +415,7 @@ public class CommonEventHandler {
             }
         }
 
-        int diamondsLevel = tool.getEnchantmentLevel(ModEnchantments.DIAMONDS.get());
+        int diamondsLevel = ModEnchantments.level(ModEnchantments.DIAMONDS, tool);
         if (diamondsLevel > 0 && isStoneBlock(state)) {
             float chance = diamondsLevel * 0.01F;
             if (player.getRandom().nextFloat() < chance) {
@@ -434,7 +434,7 @@ public class CommonEventHandler {
     public static void onBreakSpeed(PlayerEvent.BreakSpeed event) {
         Player player = event.getEntity();
         ItemStack tool = player.getMainHandItem();
-        int level = tool.getEnchantmentLevel(ModEnchantments.VERSATILITY.get());
+        int level = ModEnchantments.level(ModEnchantments.VERSATILITY, tool);
         if (level > 0) {
             float modifier = VersatilityEnchantment.getSpeedModifier(
                     player, event.getOriginalSpeed());

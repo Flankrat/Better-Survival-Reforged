@@ -34,8 +34,7 @@ public class NunchakuItem extends CustomWeaponItem {
 
         if (attacker instanceof Player player) {
             player.getCapability(ModCapabilities.NUNCHAKU_COMBO).ifPresent(combo -> {
-                int comboLevel = EnchantmentHelper.getItemEnchantmentLevel(
-                        ModEnchantments.COMBO.get(), stack);
+                int comboLevel = ModEnchantments.level(ModEnchantments.COMBO, stack);
                 combo.setComboPower(combo.getComboPower() + 0.1F + comboLevel / 20F);
             });
         }
