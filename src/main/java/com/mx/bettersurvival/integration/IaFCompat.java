@@ -22,7 +22,6 @@ import java.util.List;
  * 火系: 着火 + 击退 (同冰与火的火龙骨剑)
  * 冰系: 冰冻 + 缓慢/挖掘疲劳 + 击退 (同冰与火的冰龙骨剑)
  * 电系: ChainLightningUtils 链式闪电 + 击退 (同冰与火的雷龙骨剑)
- * 金龙钢: 圣铭之力（魔法伤害+发光）
  */
 public final class IaFCompat {
 
@@ -38,12 +37,6 @@ public final class IaFCompat {
     private static Tier LIGHTNING_DRAGONBONE;
     // Gold dragon bone: forged by a gold dragon (needs the Ice and Fire build with gold dragon forges)
     private static Tier GOLD_DRAGONBONE;
-
-    // 龙钢Tier
-    private static Tier FIRE_DRAGONSTEEL;
-    private static Tier ICE_DRAGONSTEEL;
-    private static Tier LIGHTNING_DRAGONSTEEL;
-    private static Tier GOLD_DRAGONSTEEL;
 
     private static boolean initialized = false;
 
@@ -98,30 +91,6 @@ public final class IaFCompat {
             COPPER = SILVER = DRAGONBONE = FIRE_DRAGONBONE = ICE_DRAGONBONE = LIGHTNING_DRAGONBONE = GOLD_DRAGONBONE = null;
         }
 
-        // 龙钢Tier初始化（含金龙钢）
-        try {
-            FIRE_DRAGONSTEEL = new net.minecraftforge.common.ForgeTier(
-                    4, 4000, 4.0F, 10.0F, 10,
-                    net.minecraft.tags.BlockTags.NEEDS_DIAMOND_TOOL,
-                    () -> net.minecraft.world.item.crafting.Ingredient.EMPTY);
-            ICE_DRAGONSTEEL = new net.minecraftforge.common.ForgeTier(
-                    4, 4000, 4.0F, 10.0F, 10,
-                    net.minecraft.tags.BlockTags.NEEDS_DIAMOND_TOOL,
-                    () -> net.minecraft.world.item.crafting.Ingredient.EMPTY);
-            LIGHTNING_DRAGONSTEEL = new net.minecraftforge.common.ForgeTier(
-                    4, 4000, 4.0F, 10.0F, 10,
-                    net.minecraft.tags.BlockTags.NEEDS_DIAMOND_TOOL,
-                    () -> net.minecraft.world.item.crafting.Ingredient.EMPTY);
-            GOLD_DRAGONSTEEL = new net.minecraftforge.common.ForgeTier(
-                    4, 4000, 4.0F, 10.0F, 10,
-                    net.minecraft.tags.BlockTags.NEEDS_DIAMOND_TOOL,
-                    () -> net.minecraft.world.item.crafting.Ingredient.EMPTY);
-
-            BetterSurvival.LOGGER.info("RLC IaF Dragon Steel tiers created (including Gold).");
-        } catch (Exception e) {
-            BetterSurvival.LOGGER.warn("Failed to create RLC IaF Dragon Steel tiers: {}", e.getMessage());
-            FIRE_DRAGONSTEEL = ICE_DRAGONSTEEL = LIGHTNING_DRAGONSTEEL = GOLD_DRAGONSTEEL = null;
-        }
     }
 
     public static List<IafTierEntry> getIafTierEntries() {
@@ -141,14 +110,6 @@ public final class IaFCompat {
             list.add(new IafTierEntry(LIGHTNING_DRAGONBONE, "lightningdragonbone"));
         if (GOLD_DRAGONBONE != null)
             list.add(new IafTierEntry(GOLD_DRAGONBONE, "golddragonbone"));
-        if (FIRE_DRAGONSTEEL != null)
-            list.add(new IafTierEntry(FIRE_DRAGONSTEEL, "firedragonsteel"));
-        if (ICE_DRAGONSTEEL != null)
-            list.add(new IafTierEntry(ICE_DRAGONSTEEL, "icedragonsteel"));
-        if (LIGHTNING_DRAGONSTEEL != null)
-            list.add(new IafTierEntry(LIGHTNING_DRAGONSTEEL, "lightningdragonsteel"));
-        if (GOLD_DRAGONSTEEL != null)
-            list.add(new IafTierEntry(GOLD_DRAGONSTEEL, "golddragonsteel"));
         return list;
     }
 
@@ -196,33 +157,6 @@ public final class IaFCompat {
                 applyGoldAbility(target, attacker);
             if (isFireDragon(target) || isIceDragon(target) || isLightningDragon(target))
                 return 4.0F;
-        }
-        // 火龙钢 — 强化熔蚀
-        else if (tier == FIRE_DRAGONSTEEL) {
-            if (applyEffects)
-                applyFireAbility(target, attacker, 8);
-            if (isIceDragon(target))
-                return 12.0F;
-        }
-        // 冰龙钢 — 强化冰噬
-        else if (tier == ICE_DRAGONSTEEL) {
-            if (applyEffects)
-                applyIceAbility(target, attacker, 300, 140, 3);
-            if (isFireDragon(target))
-                return 12.0F;
-        }
-        // 雷龙钢 — 强化链闪
-        else if (tier == LIGHTNING_DRAGONSTEEL) {
-            if (applyEffects)
-                applyLightningAbility(target, attacker, baseDamage);
-            if (isFireDragon(target) || isIceDragon(target))
-                return 6.0F;
-        }
-        // 金龙钢 — 圣铭之力
-        else if (tier == GOLD_DRAGONSTEEL) {
-            if (applyEffects) {
-                applyGoldDragonsteelEffect(target, attacker, baseDamage);
-            }
         }
 
         return 0.0F;
@@ -360,22 +294,6 @@ public final class IaFCompat {
         }
     }
 
-    /**
-     * 金龙钢 — 圣铭之力: 魔法伤害 + 正面效果增伤 + 发光
-     */
-    private static void applyGoldDragonsteelEffect(LivingEntity target,
-            @Nullable LivingEntity attacker, float baseDamage) {
-        float bonusDamage = 0;
-        // 目标身上有正面效果时增伤30%
-        if (target.getActiveEffects().stream().anyMatch(e -> e.getEffect().isBeneficial())) {
-            bonusDamage = baseDamage * 0.3F;
-        }
-        if (attacker != null) {
-            target.hurt(attacker.level().damageSources().magic(), baseDamage * 0.5F + bonusDamage);
-        }
-        target.addEffect(new MobEffectInstance(MobEffects.GLOWING, 60, 0));
-    }
-
     // ════════════════════════════════════════════════════════
     // 工具方法
     // ════════════════════════════════════════════════════════
@@ -403,17 +321,17 @@ public final class IaFCompat {
                     .withStyle(ChatFormatting.GREEN));
         } else if (tier == DRAGONBONE) {
             // 普通龙骨无特殊提示
-        } else if (tier == FIRE_DRAGONBONE || tier == FIRE_DRAGONSTEEL) {
+        } else if (tier == FIRE_DRAGONBONE) {
             tooltip.add(Component.translatable("dragon_sword_fire.hurt1")
                     .withStyle(ChatFormatting.GREEN));
             tooltip.add(Component.translatable("dragon_sword_fire.hurt2")
                     .withStyle(ChatFormatting.DARK_RED));
-        } else if (tier == ICE_DRAGONBONE || tier == ICE_DRAGONSTEEL) {
+        } else if (tier == ICE_DRAGONBONE) {
             tooltip.add(Component.translatable("dragon_sword_ice.hurt1")
                     .withStyle(ChatFormatting.GREEN));
             tooltip.add(Component.translatable("dragon_sword_ice.hurt2")
                     .withStyle(ChatFormatting.AQUA));
-        } else if (tier == LIGHTNING_DRAGONBONE || tier == LIGHTNING_DRAGONSTEEL) {
+        } else if (tier == LIGHTNING_DRAGONBONE) {
             tooltip.add(Component.translatable("dragon_sword_lightning.hurt1")
                     .withStyle(ChatFormatting.GREEN));
             tooltip.add(Component.translatable("dragon_sword_lightning.hurt2")
@@ -421,9 +339,6 @@ public final class IaFCompat {
         } else if (tier == GOLD_DRAGONBONE) {
             tooltip.add(Component.translatable("tooltip.bettersurvival.golddragonbone.hurt1")
                     .withStyle(ChatFormatting.GREEN));
-            tooltip.add(Component.translatable("dragon_sword_gold.hurt2")
-                    .withStyle(ChatFormatting.GOLD));
-        } else if (tier == GOLD_DRAGONSTEEL) {
             tooltip.add(Component.translatable("dragon_sword_gold.hurt2")
                     .withStyle(ChatFormatting.GOLD));
         }
