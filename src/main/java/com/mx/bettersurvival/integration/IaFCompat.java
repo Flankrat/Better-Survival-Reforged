@@ -36,6 +36,8 @@ public final class IaFCompat {
     private static Tier FIRE_DRAGONBONE;
     private static Tier ICE_DRAGONBONE;
     private static Tier LIGHTNING_DRAGONBONE;
+    // Gold dragon bone: forged by a gold dragon (needs the Ice and Fire build with gold dragon forges)
+    private static Tier GOLD_DRAGONBONE;
 
     // 龙钢Tier
     private static Tier FIRE_DRAGONSTEEL;
@@ -86,11 +88,14 @@ public final class IaFCompat {
             LIGHTNING_DRAGONBONE = new net.minecraftforge.common.ForgeTier(3, 2000, 10.0F, 5.5F, 22,
                     net.minecraft.tags.BlockTags.NEEDS_DIAMOND_TOOL,
                     () -> net.minecraft.world.item.crafting.Ingredient.EMPTY);
+            GOLD_DRAGONBONE = new net.minecraftforge.common.ForgeTier(3, 2000, 10.0F, 5.5F, 22,
+                    net.minecraft.tags.BlockTags.NEEDS_DIAMOND_TOOL,
+                    () -> net.minecraft.world.item.crafting.Ingredient.EMPTY);
 
             BetterSurvival.LOGGER.info("RLC IaF tiers resolved successfully via ForgeTier proxy.");
         } catch (Exception e) {
             BetterSurvival.LOGGER.warn("Failed to resolve RLC IaF tiers: {}", e.getMessage());
-            COPPER = SILVER = DRAGONBONE = FIRE_DRAGONBONE = ICE_DRAGONBONE = LIGHTNING_DRAGONBONE = null;
+            COPPER = SILVER = DRAGONBONE = FIRE_DRAGONBONE = ICE_DRAGONBONE = LIGHTNING_DRAGONBONE = GOLD_DRAGONBONE = null;
         }
 
         // 龙钢Tier初始化（含金龙钢）
@@ -134,6 +139,8 @@ public final class IaFCompat {
             list.add(new IafTierEntry(ICE_DRAGONBONE, "icedragonbone"));
         if (LIGHTNING_DRAGONBONE != null)
             list.add(new IafTierEntry(LIGHTNING_DRAGONBONE, "lightningdragonbone"));
+        if (GOLD_DRAGONBONE != null)
+            list.add(new IafTierEntry(GOLD_DRAGONBONE, "golddragonbone"));
         if (FIRE_DRAGONSTEEL != null)
             list.add(new IafTierEntry(FIRE_DRAGONSTEEL, "firedragonsteel"));
         if (ICE_DRAGONSTEEL != null)
@@ -180,6 +187,14 @@ public final class IaFCompat {
             if (applyEffects)
                 applyLightningAbility(target, attacker, baseDamage);
             if (isFireDragon(target) || isIceDragon(target))
+                return 4.0F;
+        }
+        // Gold dragon bone: Ice and Fire's arcane burst, with the same dragon bonus as the lightning dragon bone
+        // weapons, against fire, ice and lightning dragons
+        else if (tier == GOLD_DRAGONBONE) {
+            if (applyEffects)
+                applyGoldAbility(target, attacker);
+            if (isFireDragon(target) || isIceDragon(target) || isLightningDragon(target))
                 return 4.0F;
         }
         // 火龙钢 — 强化熔蚀
@@ -287,6 +302,20 @@ public final class IaFCompat {
     }
 
     /**
+     * Gold: Ice and Fire's arcane burst (magic damage to the target and the hostile mobs around it, knockback), on
+     * Arcane Burst Cooldown like chain lightning. A thrown spear has no attacker: no held-weapon cooldown then.
+     */
+    private static void applyGoldAbility(LivingEntity target, @Nullable LivingEntity attacker) {
+        if (target.level().isClientSide || attacker == null || !iafAbilityEnabled("dragonWeaponGoldAbility"))
+            return;
+        try {
+            com.github.alexthe666.iceandfire.api.ArcaneBurstUtils.createArcaneBurst(target.level(), target, attacker, true);
+        } catch (Throwable e) {
+            warnIafApiOnce("arcane burst", e);
+        }
+    }
+
+    /**
      * 链式闪电 — 多目标跳跃 + 蓄电叠层
      */
     private static void applyChainLightning(LivingEntity target, @Nullable Entity attacker, float baseDamage) {
@@ -359,6 +388,15 @@ public final class IaFCompat {
         return entity.getClass().getName().contains("EntityIceDragon");
     }
 
+    public static boolean isLightningDragon(Entity entity) {
+        return entity.getClass().getName().contains("EntityLightningDragon");
+    }
+
+    /** Gold dragon bone weapons are hidden like Ice and Fire's other gold dragon items (no creative tab). */
+    public static boolean isHiddenGoldItem(String registryPath) {
+        return registryPath.startsWith("itemgolddragonbone");
+    }
+
     public static void addMaterialTooltip(Tier tier, List<Component> tooltip) {
         if (tier == SILVER) {
             tooltip.add(Component.translatable("silvertools.hurt")
@@ -380,6 +418,11 @@ public final class IaFCompat {
                     .withStyle(ChatFormatting.GREEN));
             tooltip.add(Component.translatable("dragon_sword_lightning.hurt2")
                     .withStyle(ChatFormatting.DARK_PURPLE));
+        } else if (tier == GOLD_DRAGONBONE) {
+            tooltip.add(Component.translatable("tooltip.bettersurvival.golddragonbone.hurt1")
+                    .withStyle(ChatFormatting.GREEN));
+            tooltip.add(Component.translatable("dragon_sword_gold.hurt2")
+                    .withStyle(ChatFormatting.GOLD));
         } else if (tier == GOLD_DRAGONSTEEL) {
             tooltip.add(Component.translatable("dragon_sword_gold.hurt2")
                     .withStyle(ChatFormatting.GOLD));
