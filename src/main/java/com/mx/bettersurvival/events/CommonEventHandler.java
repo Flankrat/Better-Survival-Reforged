@@ -25,7 +25,6 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
-import net.minecraft.world.entity.projectile.Arrow;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
@@ -36,6 +35,10 @@ import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.player.ArrowLooseEvent;
+import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.EventPriority;
+import com.mx.bettersurvival.mixin.AbstractArrowInvoker;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -292,7 +295,8 @@ public class CommonEventHandler {
         }
     }
 
-    @SubscribeEvent
+    // LOWEST so a mod that cancels the shot does so first (a cancelled ArrowLooseEvent isn't passed on to us).
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onArrowLoose(ArrowLooseEvent event) {
         Player player = event.getEntity();
         if (player.level().isClientSide)
@@ -307,21 +311,43 @@ public class CommonEventHandler {
 
         int multishotLevel = ModEnchantments.level(ModEnchantments.MULTISHOT, bow);
         if (multishotLevel > 0) {
+            // The extra arrows copy the ammo the bow is shooting (getProjectile also finds ammo in quivers that hook
+            // into it, like Spartan Weaponry's), so tipped/spectral/modded arrows fire extras of the same kind.
+            // ArrowLooseEvent fires before the bow checks its ammo; with no ammo the bow only fires in creative or
+            // with Infinity, which use plain arrows.
+            ItemStack ammo = player.getProjectile(bow);
+            boolean infinite = player.getAbilities().instabuild || bow.getEnchantmentLevel(Enchantments.INFINITY_ARROWS) > 0;
+            if (ammo.isEmpty()) {
+                if (!infinite)
+                    return;
+                ammo = new ItemStack(Items.ARROW);
+            }
+            ArrowItem arrowItem = ammo.getItem() instanceof ArrowItem a ? a : (ArrowItem) Items.ARROW;
+
             int extraArrows = multishotLevel * 2;
             for (int i = 0; i < extraArrows; i++) {
 
                 float angleOffset = ((i / 2) + 1) * 10.0F * (i % 2 == 0 ? 1 : -1);
 
-                Arrow arrow = new Arrow(level, player);
+                // Built like BowItem.releaseUsing builds the real arrow (createArrow, then the bow's customArrow hook)
+                AbstractArrow arrow = arrowItem.createArrow(level, ammo, player);
+                if (bow.getItem() instanceof BowItem bowItem)
+                    arrow = bowItem.customArrow(arrow);
                 arrow.shootFromRotation(player, player.getXRot(),
                         player.getYRot() + angleOffset, 0.0F,
                         power * 3.0F, 1.0F);
+                // Extras are free, so they can't be picked up (or recovered by Arrow Recovery)
                 arrow.pickup = AbstractArrow.Pickup.CREATIVE_ONLY;
 
                 int powerLevel = bow.getEnchantmentLevel(Enchantments.POWER_ARROWS);
                 if (powerLevel > 0) {
                     arrow.setBaseDamage(
                             arrow.getBaseDamage() + (double) powerLevel * 0.5D + 0.5D);
+                }
+
+                int punchLevel = bow.getEnchantmentLevel(Enchantments.PUNCH_ARROWS);
+                if (punchLevel > 0) {
+                    arrow.setKnockback(punchLevel);
                 }
 
                 if (bow.getEnchantmentLevel(Enchantments.FLAMING_ARROWS) > 0) {
@@ -348,8 +374,12 @@ public class CommonEventHandler {
         if (!(arrow.getOwner() instanceof Player player))
             return;
 
-        ItemStack bow = findBow(player);
-        if (bow.isEmpty())
+        // Only arrows shot from the bow the player is drawing right now. BowItem.releaseUsing spawns the arrow while
+        // the bow is still the item in use, so this is that bow. Thrown spears, Spartan throwing weapons, tridents and
+        // crossbow bolts aren't shot from a drawn bow, so a bow held in the other hand no longer gives them its
+        // Range speed or Arrow Recovery.
+        ItemStack bow = player.isUsingItem() ? player.getUseItem() : ItemStack.EMPTY;
+        if (!(bow.getItem() instanceof BowItem))
             return;
 
         int rangeLevel = ModEnchantments.level(ModEnchantments.RANGE, bow);
@@ -366,7 +396,9 @@ public class CommonEventHandler {
         }
     }
 
-    @SubscribeEvent
+    // LOWEST so a mod that cancels the hit (Ice and Fire lets arrows pass through ghosts) does so first; cancelled
+    // events aren't passed on to us, so the arrow isn't recovered when it never really hit.
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onArrowHit(ProjectileImpactEvent event) {
         if (event.getEntity().level().isClientSide)
             return;
@@ -384,9 +416,10 @@ public class CommonEventHandler {
             if (level > 0 && arrow.pickup == AbstractArrow.Pickup.ALLOWED) {
                 float chance = Math.min(1.0F, level * 0.33F);
                 if (player.getRandom().nextFloat() < chance) {
-                    ItemStack recovered = new ItemStack(Items.ARROW);
-                    if (!player.getInventory().add(recovered)) {
-                        player.drop(recovered, false);
+                    // The arrow's own pickup item: a tipped arrow keeps its potion, a modded arrow stays that arrow
+                    ItemStack recovered = ((AbstractArrowInvoker) arrow).bettersurvival$getPickupItem();
+                    if (!recovered.isEmpty()) {
+                        giveRecovered(player, recovered.copy());
                     }
                     arrow.discard();
                 }
@@ -444,14 +477,20 @@ public class CommonEventHandler {
         }
     }
 
-    private static ItemStack findBow(Player player) {
-        ItemStack mainHand = player.getMainHandItem();
-        if (mainHand.getItem() instanceof BowItem)
-            return mainHand;
-        ItemStack offHand = player.getOffhandItem();
-        if (offHand.getItem() instanceof BowItem)
-            return offHand;
-        return ItemStack.EMPTY;
+    /**
+     * Hands a recovered arrow to the player the way picking it up would: pickup handlers get it first (Spartan
+     * Weaponry quivers with Ammo Collect on take arrows from EntityItemPickupEvent), what they leave goes into the
+     * inventory, and what doesn't fit drops at the player's feet. Not dropped on the ground first, because with
+     * ItemPhysic's click-to-pick-up the player would have to pick every recovered arrow up by hand.
+     */
+    private static void giveRecovered(Player player, ItemStack stack) {
+        // Carrier item for the event only; it is never added to the world
+        ItemEntity carrier = new ItemEntity(player.level(), player.getX(), player.getY(), player.getZ(), stack);
+        MinecraftForge.EVENT_BUS.post(new EntityItemPickupEvent(player, carrier));
+        ItemStack left = carrier.getItem();
+        if (!left.isEmpty() && !player.getInventory().add(left)) {
+            player.drop(left, false);
+        }
     }
 
     private static boolean isStoneBlock(BlockState state) {
