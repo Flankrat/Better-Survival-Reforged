@@ -107,6 +107,8 @@ public class ModItems {
                 registerWeaponsForTier(tier, name, false);
         }
 
+        // A new material's nunchaku must also be added to data/bettersurvival/tags/items/nunchakus.json
+        // (RLCombat maps that tag to blunt damage; without it the nunchaku falls back to the sword class = slashing).
         private static void registerWeaponsForTier(Tier tier, String name, boolean fireResistant) {
                 ALL_WEAPONS.add(ITEMS.register("item" + name + "hammer",
                                 () -> new HammerItem(tier, HAMMER_DMG, HAMMER_SPD, props(fireResistant))));

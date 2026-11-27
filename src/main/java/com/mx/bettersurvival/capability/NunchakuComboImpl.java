@@ -13,8 +13,16 @@ public class NunchakuComboImpl implements INunchakuCombo {
 
     @Override
     public void setComboPower(float power) {
-        this.comboPower = Math.min(power, 1.0F);
+        this.comboPower = Math.min(power, maxPower());
         this.comboTime = 30;
+    }
+
+    /** Highest combo power: 1.0 (x2 hit) in the original mode, cap - start in per-hit scaling mode. */
+    private static float maxPower() {
+        var c = com.mx.bettersurvival.config.ModConfig.COMMON;
+        if (!c.nunchakuComboScalesWeaponDamage.get())
+            return 1.0F;
+        return (float) Math.max(0.0, c.nunchakuComboCap.get() - c.nunchakuComboStart.get());
     }
 
     @Override

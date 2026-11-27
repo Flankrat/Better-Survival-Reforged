@@ -1,0 +1,121 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "bettersurvival:itemwoodnunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemstonenunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemironnunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemgoldnunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemdiamondnunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itememeraldnunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemcryingobsidiannunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemnetheritenunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemlivingnunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemsentientnunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemcoppernunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemsilvernunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemdragonbonenunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemfiredragonbonenunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemicedragonbonenunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemlightningdragonbonenunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemgolddragonbonenunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemumbriumnunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemscarlitenunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemetheriumnunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemironwoodnunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemsteeleafnunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemknightmetalnunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemfierynunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemancientmetalnunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemblacksteelnunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemcursiumnunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemignitiumnunchaku",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemwitheritenunchaku",
+      "required": false
+    }
+  ]
+}

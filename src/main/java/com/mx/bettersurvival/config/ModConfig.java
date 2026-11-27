@@ -38,6 +38,9 @@ public class ModConfig {
                 public final ForgeConfigSpec.DoubleValue crossbowDmgMod;
                 public final ForgeConfigSpec.DoubleValue battleAxeSpd;
                 public final ForgeConfigSpec.DoubleValue nunchakuSpd;
+                public final ForgeConfigSpec.BooleanValue nunchakuComboScalesWeaponDamage;
+                public final ForgeConfigSpec.DoubleValue nunchakuComboStart;
+                public final ForgeConfigSpec.DoubleValue nunchakuComboCap;
                 public final ForgeConfigSpec.DoubleValue hammerSpd;
                 public final ForgeConfigSpec.DoubleValue daggerSpd;
                 public final ForgeConfigSpec.DoubleValue spearSpd;
@@ -174,6 +177,19 @@ public class ModConfig {
                                         .defineInRange("battleAxeSpd", 1.25, 0.1, 10.0);
                         nunchakuSpd = builder.comment("Attack delay factor for nunchaku.")
                                         .defineInRange("nunchakuSpd", 0.3, 0.1, 10.0);
+                        nunchakuComboScalesWeaponDamage = builder.comment(
+                                        "How the nunchaku combo changes damage. Each hit in a combo adds 0.1 (+0.05 per Combo enchantment",
+                                        "level); the combo resets 30 ticks after the last hit.",
+                                        "false: original Better Survival, the whole hit is multiplied by 1 + combo (up to x2).",
+                                        "true: per-hit scaling, the weapon's own damage is multiplied by the combo, starting at",
+                                        "nunchakuComboStart and climbing each hit up to nunchakuComboCap. Flat bonuses (enchantments,",
+                                        "+8 vs dragons) aren't scaled. Needs Progressive Mechanics Library to scale only the weapon",
+                                        "damage; without it the whole hit is scaled.")
+                                        .define("nunchakuComboScalesWeaponDamage", false);
+                        nunchakuComboStart = builder.comment("Per-hit scaling: weapon damage multiplier of the first hit of a combo.")
+                                        .defineInRange("nunchakuComboStart", 0.1, 0.0, 10.0);
+                        nunchakuComboCap = builder.comment("Per-hit scaling: highest weapon damage multiplier a combo can reach.")
+                                        .defineInRange("nunchakuComboCap", 2.0, 0.1, 10.0);
                         hammerSpd = builder.comment("Attack delay factor for hammers.")
                                         .defineInRange("hammerSpd", 1.35, 0.1, 10.0);
                         daggerSpd = builder.comment("Attack delay factor for daggers.")
