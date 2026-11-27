@@ -1,0 +1,121 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "bettersurvival:itemwooddagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemstonedagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemirondagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemgolddagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemdiamonddagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itememeralddagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemcryingobsidiandagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemnetheritedagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemlivingdagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemsentientdagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemcopperdagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemsilverdagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemdragonbonedagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemfiredragonbonedagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemicedragonbonedagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemlightningdragonbonedagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemgolddragonbonedagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemumbriumdagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemscarlitedagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemetheriumdagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemironwooddagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemsteeleafdagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemknightmetaldagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemfierydagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemancientmetaldagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemblacksteeldagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemcursiumdagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemignitiumdagger",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemwitheritedagger",
+      "required": false
+    }
+  ]
+}

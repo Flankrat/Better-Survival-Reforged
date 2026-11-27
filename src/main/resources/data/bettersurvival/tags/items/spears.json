@@ -1,0 +1,121 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "bettersurvival:itemwoodspear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemstonespear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemironspear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemgoldspear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemdiamondspear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itememeraldspear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemcryingobsidianspear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemnetheritespear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemlivingspear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemsentientspear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemcopperspear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemsilverspear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemdragonbonespear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemfiredragonbonespear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemicedragonbonespear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemlightningdragonbonespear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemgolddragonbonespear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemumbriumspear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemscarlitespear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemetheriumspear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemironwoodspear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemsteeleafspear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemknightmetalspear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemfieryspear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemancientmetalspear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemblacksteelspear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemcursiumspear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemignitiumspear",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemwitheritespear",
+      "required": false
+    }
+  ]
+}
