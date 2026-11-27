@@ -35,6 +35,15 @@ public final class PmlCompat {
         return true;
     }
 
+    /** Scales only the weapon's own damage (before flat bonuses), as Forgotten Nunchakus' combo does. */
+    public static boolean scaleWeaponDamage(DamageSource source, float factor) {
+        DamageControl control = control(source);
+        if (control == null)
+            return false;
+        control.SetWeaponDamage(factor);
+        return true;
+    }
+
     private static DamageControl control(DamageSource source) {
         return source instanceof AdvancedDamageSource ads ? ads.getDamageControl() : null;
     }

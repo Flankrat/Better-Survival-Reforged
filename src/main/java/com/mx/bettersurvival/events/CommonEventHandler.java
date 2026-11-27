@@ -212,7 +212,16 @@ public class CommonEventHandler {
 
         if (weapon.getItem() instanceof NunchakuItem && isDirectAttack) {
             attacker.getCapability(ModCapabilities.NUNCHAKU_COMBO).ifPresent(combo -> {
-                multiplyDamage(event, combo.getComboPower() + 1.0F);
+                if (ModConfig.COMMON.nunchakuComboScalesWeaponDamage.get()) {
+                    // Per-hit scaling: start low and climb each hit; only the weapon's base damage is scaled
+                    float factor = (float) Math.min(ModConfig.COMMON.nunchakuComboCap.get(),
+                            ModConfig.COMMON.nunchakuComboStart.get() + combo.getComboPower());
+                    if (!(BetterSurvival.isPmlLoaded
+                            && com.mx.bettersurvival.integration.PmlCompat.scaleWeaponDamage(event.getSource(), factor)))
+                        event.setAmount(event.getAmount() * factor);
+                } else {
+                    multiplyDamage(event, combo.getComboPower() + 1.0F);
+                }
             });
         }
 
