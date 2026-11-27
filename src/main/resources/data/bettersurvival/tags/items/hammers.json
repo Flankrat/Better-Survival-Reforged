@@ -1,0 +1,121 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "bettersurvival:itemwoodhammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemstonehammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemironhammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemgoldhammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemdiamondhammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itememeraldhammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemcryingobsidianhammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemnetheritehammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemlivinghammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemsentienthammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemcopperhammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemsilverhammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemdragonbonehammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemfiredragonbonehammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemicedragonbonehammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemlightningdragonbonehammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemgolddragonbonehammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemumbriumhammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemscarlitehammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemetheriumhammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemironwoodhammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemsteeleafhammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemknightmetalhammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemfieryhammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemancientmetalhammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemblacksteelhammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemcursiumhammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemignitiumhammer",
+      "required": false
+    },
+    {
+      "id": "bettersurvival:itemwitheritehammer",
+      "required": false
+    }
+  ]
+}
