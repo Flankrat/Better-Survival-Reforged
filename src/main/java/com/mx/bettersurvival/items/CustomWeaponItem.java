@@ -42,8 +42,9 @@ import java.util.UUID;
  */
 public class CustomWeaponItem extends SwordItem {
 
-    protected static final UUID BASE_ATTACK_DAMAGE_UUID = UUID.fromString("CB3F55D3-645C-4F38-A497-9C13A33DB5CF");
-    protected static final UUID BASE_ATTACK_SPEED_UUID = UUID.fromString("FA233E1C-4180-4865-B01B-BCCE9785ACA3");
+    // Damage/speed modifiers use Item.BASE_ATTACK_DAMAGE_UUID / BASE_ATTACK_SPEED_UUID (inherited). Don't redeclare
+    // them: the vanilla tooltip compares these UUIDs with ==, so a copy with the same value isn't recognised and the
+    // tooltip shows raw modifiers ("+4.25", "-0.72") instead of the totals ("5.25", "3.28").
     // 固定 UUID：以太攻击距离加成（主副手不叠加）
     private static final UUID ETHERIUM_REACH_UUID = UUID.fromString("b7e2a3c4-1d5e-4f60-8a91-2c3d4e5f6a70");
 
