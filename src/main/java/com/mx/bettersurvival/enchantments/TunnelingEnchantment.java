@@ -25,7 +25,10 @@ public class TunnelingEnchantment extends Enchantment {
         ItemStack stack = miner.getMainHandItem();
         int l = ModEnchantments.level(ModEnchantments.TUNNELING, miner);
 
-        if (l > 0 && canMineEffectively(miner, state, pos)) {
+        // the mined block's hardness caps the extra blocks: breaking stone must not take the obsidian or ancient debris
+        // next to it (instantly, at stone speed), as vein-miner mods do
+        float maxHardness = state.getDestroySpeed(level, pos);
+        if (l > 0 && canMineEffectively(miner, state, pos, maxHardness)) {
             Direction facing = Direction.getNearest(
                     (float) (pos.getX() + 0.5 - miner.getX()),
                     (float) (pos.getY() + 0.5 - miner.getEyeY()),
@@ -48,7 +51,7 @@ public class TunnelingEnchantment extends Enchantment {
                             continue;
 
                         BlockPos pos1 = pos.offset(x, y, z);
-                        if (canMineEffectively(miner, level.getBlockState(pos1), pos1)) {
+                        if (canMineEffectively(miner, level.getBlockState(pos1), pos1, maxHardness)) {
                             ((ServerPlayer) miner).gameMode.destroyBlock(pos1);
                         }
                     }
@@ -57,8 +60,12 @@ public class TunnelingEnchantment extends Enchantment {
         }
     }
 
-    static boolean canMineEffectively(Player player, BlockState state, BlockPos pos) {
+    static boolean canMineEffectively(Player player, BlockState state, BlockPos pos, float maxHardness) {
         if (state.isAir())
+            return false;
+        // unbreakable (-1, e.g. bedrock or modded blocks tagged mineable) or harder than the block that was mined
+        float hardness = state.getDestroySpeed(player.level(), pos);
+        if (hardness < 0 || hardness > maxHardness)
             return false;
         if (ModConfig.COMMON.preventTunnelingBlockEntities.get() && player.level().getBlockEntity(pos) != null)
             return false;
