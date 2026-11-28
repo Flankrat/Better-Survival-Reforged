@@ -436,10 +436,18 @@ public class CommonEventHandler {
         });
     }
 
-    @SubscribeEvent
+    /**
+     * LOWEST priority, and not called for a cancelled event: claim/protection mods cancel BreakEvent at normal or low
+     * priority, and when this ran first the diamond (and Tunneling's extra blocks) came out of a break that was then
+     * cancelled, so the same protected stone could be mined for diamonds again and again.
+     */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onBlockBreak(BlockEvent.BreakEvent event) {
         Player player = event.getPlayer();
         if (player.level().isClientSide)
+            return;
+        // the hammer asking protection mods whether it may crush a block: not a real break
+        if (com.mx.bettersurvival.recipe.CrushingRecipe.checkingPermission)
             return;
 
         BlockState state = event.getState();
@@ -458,16 +466,21 @@ public class CommonEventHandler {
         }
 
         int diamondsLevel = ModEnchantments.level(ModEnchantments.DIAMONDS, tool);
-        if (diamondsLevel > 0 && isStoneBlock(state)) {
+        // creative breaks drop nothing, so no diamond either
+        if (diamondsLevel > 0 && isStoneBlock(state) && !player.isCreative()) {
             float chance = diamondsLevel * 0.01F;
             if (player.getRandom().nextFloat() < chance) {
                 Level level = player.level();
-                ItemEntity diamond = new ItemEntity(level,
-                        event.getPos().getX() + 0.5,
-                        event.getPos().getY() + 0.5,
-                        event.getPos().getZ() + 0.5,
-                        new ItemStack(Items.DIAMOND));
-                level.addFreshEntity(diamond);
+                net.minecraft.core.BlockPos pos = event.getPos();
+                // Even at LOWEST a mod registered after us can still cancel the break, so the diamond is spawned once
+                // the break has finished (server.tell runs it after this tick's work), and only if the block really
+                // is gone.
+                net.minecraft.server.MinecraftServer server = level.getServer();
+                server.tell(new net.minecraft.server.TickTask(server.getTickCount(), () -> {
+                    if (level.getBlockState(pos) == state) return; // the break was cancelled
+                    level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+                            new ItemStack(Items.DIAMOND)));
+                }));
             }
         }
     }
@@ -523,16 +536,23 @@ public class CommonEventHandler {
         });
     }
 
-    @SubscribeEvent
-    public static void onLivingAttack(LivingAttackEvent event) {
+    /**
+     * Spear breakage and potion coatings, for a melee hit that LANDED. This used LivingAttackEvent, which fires at the
+     * very start of hurt(), before the hurt-cooldown and invulnerability checks: spam-clicking a mob still in its hurt
+     * cooldown broke spears and spent coating charges (and applied the potion) on hits that did nothing, and another
+     * mod cancelling the attack came too late. LivingHurtEvent fires once those checks have passed; LOWEST and not
+     * called when cancelled, so other mods have had their say.
+     */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onLivingAttack(LivingHurtEvent event) {
         Entity source = event.getSource().getEntity();
         if (!(source instanceof Player player))
             return;
         if (player.level().isClientSide)
             return;
 
-        // Only direct melee hits use the held weapon. LivingAttackEvent also fires for the player's arrows and thrown
-        // spears (their getEntity() is the player too), which broke the spear in hand when a thrown spear landed and
+        // Only direct melee hits use the held weapon. The hurt event also fires for the player's arrows and thrown
+        // spears (the damage source's getEntity() is the player too), which broke the spear in hand when a thrown spear landed and
         // spent potion-coating charges on bow shots.
         if (event.getSource().getDirectEntity() != player)
             return;

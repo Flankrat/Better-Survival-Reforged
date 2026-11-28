@@ -29,16 +29,25 @@ public class SpinningPacket {
             ServerPlayer player = ctx.get().getSender();
             if (player == null)
                 return;
+            // only with nunchaku in hand: the spin flag lets left clicks through NunchakuItem.onLeftClickEntity, so
+            // the server can't take a client's word for it (stopping is always allowed)
+            if (msg.spinning && !(player.getMainHandItem().getItem() instanceof com.mx.bettersurvival.items.NunchakuItem))
+                return;
 
-            player.getCapability(ModCapabilities.NUNCHAKU_COMBO).ifPresent(combo -> {
+            boolean changed = player.getCapability(ModCapabilities.NUNCHAKU_COMBO).map(combo -> {
+                boolean was = combo.isSpinning();
                 combo.setSpinning(msg.spinning);
                 if (!msg.spinning) {
                     combo.setComboTime(0);
                 }
-            });
-            // Tell everyone tracking this player, so they see the spin animation too.
-            ModNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> player),
-                    new SpinningSyncPacket(player.getId(), msg.spinning));
+                return was != msg.spinning;
+            }).orElse(false);
+            // Tell everyone tracking this player, so they see the spin animation too, but only when it changed:
+            // re-sending every packet let a modified client flood the players around it
+            if (changed) {
+                ModNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> player),
+                        new SpinningSyncPacket(player.getId(), msg.spinning));
+            }
         });
         ctx.get().setPacketHandled(true);
     }

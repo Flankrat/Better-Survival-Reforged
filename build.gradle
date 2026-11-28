@@ -18,6 +18,19 @@ mixin {
     config "${mod_id}.mixins.json"
 }
 
+// Dev-only GameTests (src/gametest), run with ./gradlew runGameTestServer. They're never in the built jar.
+sourceSets {
+    gametest {
+        compileClasspath += main.output + main.compileClasspath
+        runtimeClasspath += main.output + main.runtimeClasspath
+    }
+}
+configurations {
+    gametestImplementation.extendsFrom implementation
+    gametestCompileOnly.extendsFrom compileOnly
+    gametestRuntimeOnly.extendsFrom runtimeOnly
+}
+
 minecraft {
     mappings channel: 'official', version: minecraft_version
     copyIdeResources = true
@@ -43,6 +56,19 @@ minecraft {
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
             property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
+        }
+
+        gameTestServer {
+            workingDirectory project.file('run')
+            property 'forge.enabledGameTestNamespaces', mod_id
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                    source sourceSets.gametest
+                }
+            }
         }
 
         data {

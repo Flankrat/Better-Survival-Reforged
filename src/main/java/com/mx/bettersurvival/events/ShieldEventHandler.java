@@ -79,7 +79,13 @@ public final class ShieldEventHandler {
         Entity src = source.getEntity();
         if (src instanceof LivingEntity attacker && !source.is(DamageTypeTags.IS_PROJECTILE)) {
             attacker.knockback(0.5F, defender.getX() - attacker.getX(), defender.getZ() - attacker.getZ());
-            ReflectionEnchantment.reflectDamage(attacker, defender, shield);
+            // Reflection deals thorns damage, which a shield can block. Without this check two players facing each
+            // other with Reflection shields bounced one hit back and forth (each block reflecting again) until a roll
+            // failed or a shield broke, and from level 7 every roll succeeds: a stack overflow. A reflection isn't
+            // reflected again.
+            if (!source.is(DamageTypes.THORNS)) {
+                ReflectionEnchantment.reflectDamage(attacker, defender, shield);
+            }
         }
     }
 
@@ -175,24 +181,26 @@ public final class ShieldEventHandler {
         boolean blocking = entity.isBlocking()
                 && entity.getUseItem().getItem() instanceof CustomShieldItem;
 
+        ItemStack shield = entity.getUseItem();
+
+        // weight slowdown: only with the shieldWeightSlowdown option
         if (blocking && ModConfig.COMMON.shieldWeightSlowdown.get()) {
-            ItemStack shield = entity.getUseItem();
             CustomShieldItem custom = (CustomShieldItem) shield.getItem();
             int weightless = ModEnchantments.level(ModEnchantments.WEIGHTLESS, shield);
             int effWeight = Math.max(custom.getWeight() - 2 * weightless, 0);
             double mult = Math.pow(2, 1 - effWeight) - 1; // 越重越慢；effWeight<=1 时为 0（无惩罚）
             ensureModifier(speed, SHIELD_SPEED_UUID, "bettersurvival:shield_weight", mult,
                     AttributeModifier.Operation.MULTIPLY_TOTAL);
-
-            boolean heavy = ModEnchantments.level(ModEnchantments.HEAVY, shield) > 0;
-            if (heavy) {
-                ensureModifier(kb, SHIELD_KB_UUID, "bettersurvival:shield_heavy", 1.0,
-                        AttributeModifier.Operation.ADDITION);
-            } else {
-                removeModifier(kb, SHIELD_KB_UUID);
-            }
         } else {
             removeModifier(speed, SHIELD_SPEED_UUID);
+        }
+
+        // Heavy's knockback resistance: on its own, so it still works with shieldWeightSlowdown off (it used to sit
+        // inside the slowdown branch and silently did nothing then)
+        if (blocking && ModEnchantments.level(ModEnchantments.HEAVY, shield) > 0) {
+            ensureModifier(kb, SHIELD_KB_UUID, "bettersurvival:shield_heavy", 1.0,
+                    AttributeModifier.Operation.ADDITION);
+        } else {
             removeModifier(kb, SHIELD_KB_UUID);
         }
     }
