@@ -47,6 +47,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -54,7 +55,7 @@ import java.util.function.Consumer;
 /**
  * Reproduces the findings of the Nov 28 2026 bug scan (bug-report.md). Each test asserts the CORRECT behaviour, so a
  * failing test means that finding reproduced. #4 (hammer slam hits count as melee hits) is kept as a feature and not
- * tested; #7 (Heavy) didn't reproduce on this branch. Not tested here: #8/#20 (config design, needs a client), #12/#16 (need Ice and Fire), #13 (design choice),
+ * tested; #7 (Heavy) didn't reproduce on this branch. Not tested here: #8/#20 (config design, needs a client), #13 (design choice),
  * #14 (dead code, no effect), #18 (client side), #21/#22 (performance).
  */
 @GameTestHolder("bettersurvival")
@@ -301,6 +302,68 @@ public class ScanReproTests {
         boolean spinning = m.player().getCapability(ModCapabilities.NUNCHAKU_COMBO).map(c -> c.isSpinning()).orElse(false);
         TestKit.remove(h, m);
         TestKit.result(h, "#11 spin without nunchaku", !spinning, spinning ? "spinning switched on holding a sword" : "refused");
+    }
+
+    // ---------- #12: lightning dragon bone/dragonsteel lightning without JMixin ----------
+
+    /**
+     * Without JMixin, every lightning dragon bone/dragonsteel hit spawned a real lightning bolt: fire, villagers
+     * turned into witches, pigs into zombified piglins, charged creepers. It must only look like lightning.
+     */
+    @GameTest(template = T)
+    public static void lightningFallbackIsHarmless(GameTestHelper h) throws Exception {
+        TestKit.Mock m = TestKit.player(h, 3, 1, 5, GameType.SURVIVAL, 0);
+        net.minecraft.world.entity.npc.Villager villager = h.spawnWithNoFreeWill(EntityType.VILLAGER, new BlockPos(6, 1, 5));
+        Method fallback = null;
+        for (Method x : com.mx.bettersurvival.integration.IaFCompat.class.getDeclaredMethods()) {
+            if (x.getName().equals("triggerChainLightning") || x.getName().equals("triggerFallbackLightning")) fallback = x;
+        }
+        fallback.setAccessible(true);
+        Object[] args = fallback.getParameterCount() == 3
+                ? new Object[] {villager, m.player(), 6.0F}
+                : new Object[] {villager, m.player()};
+        fallback.invoke(null, args);
+        AABB box = new AABB(h.absolutePos(BlockPos.ZERO), h.absolutePos(new BlockPos(12, 6, 12)));
+        Field visualOnly = net.minecraft.world.entity.LightningBolt.class.getDeclaredField("visualOnly"); // no getter
+        visualOnly.setAccessible(true);
+        long real = 0;
+        for (var bolt : h.getLevel().getEntitiesOfClass(net.minecraft.world.entity.LightningBolt.class, box)) {
+            if (!visualOnly.getBoolean(bolt)) real++;
+        }
+        TestKit.remove(h, m);
+        TestKit.result(h, "#12 lightning fallback", real == 0, real + " real (fire-starting, mob-converting) lightning bolt(s) from one lightning hit");
+    }
+
+    // ---------- #16: thrown spear's material bonus ----------
+
+    /**
+     * A thrown spear added Ice and Fire's material bonus (silver: +2 against undead) to its base damage before each
+     * hit, permanently. A spear that bounces off (target in its hurt cooldown) and hits again had it twice.
+     */
+    @GameTest(template = T)
+    public static void spearBonusDoesNotStack(GameTestHelper h) throws Exception {
+        Item silverSpear = item("itemsilverspear");
+        if (silverSpear == null || silverSpear == Items.AIR) {
+            TestKit.result(h, "#16 spear bonus", true, "Ice and Fire isn't loaded (can't tell)");
+            return;
+        }
+        TestKit.Mock m = TestKit.player(h, 3, 1, 5, GameType.SURVIVAL, 0);
+        Zombie target = h.spawnWithNoFreeWill(EntityType.ZOMBIE, new BlockPos(6, 1, 5));
+        target.invulnerableTime = 20;
+        setField(LivingEntity.class, "lastHurt", target, 1000.0F); // every hit bounces off
+        var spear = new com.mx.bettersurvival.entities.FlyingSpearEntity(h.getLevel(), m.player());
+        spear.setSpear(new ItemStack(silverSpear));
+        spear.setBaseDamage(3.0);
+        Method onHit = net.minecraft.world.entity.projectile.AbstractArrow.class.getDeclaredMethod("onHitEntity",
+                net.minecraft.world.phys.EntityHitResult.class);
+        onHit.setAccessible(true);
+        for (int i = 0; i < 3; i++) {
+            spear.setDeltaMovement(new Vec3(1, 0, 0));
+            onHit.invoke(spear, new net.minecraft.world.phys.EntityHitResult(target));
+        }
+        double base = spear.getBaseDamage();
+        TestKit.remove(h, m);
+        TestKit.result(h, "#16 spear bonus", Math.abs(base - 3.0) < 0.001, "base damage after 3 bounced hits: " + base + " (started at 3.0)");
     }
 
     // ---------- #15: nunchaku knockback cancel ----------
