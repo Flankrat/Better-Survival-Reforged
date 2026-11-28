@@ -263,7 +263,7 @@ public final class IaFCompat {
                     target.level(), target, attacker, baseDamage, attacker != null);
         } catch (Throwable e) {
             // 降级: JMixin链闪 或 原版闪电
-            triggerFallbackLightning(target, attacker);
+            triggerFallbackLightning(target, attacker, baseDamage);
             warnIafApiOnce("chain lightning", e);
         }
     }
@@ -271,7 +271,7 @@ public final class IaFCompat {
     /**
      * 闪电降级: JMixin → 原版LightningBolt
      */
-    private static void triggerFallbackLightning(LivingEntity target, Entity attacker) {
+    private static void triggerFallbackLightning(LivingEntity target, Entity attacker, float baseDamage) {
         if (BetterSurvival.isJMixinLoaded) {
             try {
                 com.mx.jmixin.lightning.ChainLightningUtils.createChainLightning(
@@ -289,7 +289,14 @@ public final class IaFCompat {
                     bolt.setCause(sp);
                 }
                 bolt.addTag("IceAndFire_DontDestroyLoot");
+                // Only the look of lightning. A real bolt on every hit set fire to the ground and converted what it
+                // struck (villager to witch, pig to zombified piglin, creeper to charged creeper), since thunderHit
+                // runs for whatever it hits; the damage is dealt directly instead.
+                bolt.setVisualOnly(true);
                 serverLevel.addFreshEntity(bolt);
+                // the same amount a real bolt deals (5), never more than the weapon's own damage
+                float damage = Math.min(5.0F, Math.max(1.0F, baseDamage));
+                target.hurt(serverLevel.damageSources().lightningBolt(), damage);
             }
         }
     }
